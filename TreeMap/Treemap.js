@@ -1,148 +1,142 @@
-/**
- * Created by Administrator on 2016/6/25.
- */
-function squarify(rect, children, row, w, id){  //squarify(rect, json.children, [], width(rect), 0);
-    if(id == children.length) {
-        layoutRow(rect, row);
-        return;
-    }
-    var head = children[id];
-    var _row = row.slice(0);
-    _row.push(head);
-    if(row.length == 0 || worst(row, w) >=worst(_row, w)){
-        squarify(rect, children, _row, w, id+1);
-    }
-    else{
-        var newRect = layoutRow(rect, row);
-        squarify(newRect, children, [], width(newRect), id);
-    }
-}
-
-function worst(R, w){
-    var sum = 0;
-    var _max = 999999999;
-    var ratio = [];
-    for(var i = 0; i < R.length; i++){
-        sum += R[i].size;
-    }
-    var len = sum / w;
-    for(var i = 0; i < R.length; i++){
-        var l = R[i].size / len;
-        if(l < len){
-            ratio.push(len/l);
-        }
-        else{
-            ratio.push(l/len);
-        }
-    }
-    _max = ratio[0];
-    for(var i = 1; i < ratio.length; i++){
-        _max = Math.max(ratio[i], _max);
-    }
-    return _max;
-}
-
-function layoutRow(rect, row){
-    var parent = document.getElementsByClassName("box")[0];
-    var size = 0;
-    var newRect = [];
-    var subRect = null;
-    for(var i = 0; i < row.length; i++){
-        size += row[i].size;
-    }
-    if(rect.w < rect.h){
-        var len = size / rect.w;
-        for(var i = 0; i < row.length; i++){
-            var _w = row[i].size / len;
-            newRect.push({w:_w,h:len});
-        }
-        newRect[0].x = rect.x;
-        newRect[0].y = rect.y;
-        for(var i = 1; i < newRect.length; i++){
-            newRect[i].x = newRect[i-1].x + newRect[i-1].w;
-            newRect[i].y = newRect[i-1].y;
-        }
-        subRect = {x:rect.x,y:rect.y+len,w:rect.w,h:rect.h-len};
-    }
-    else{
-        var len = size / rect.h;
-        for(var i = 0; i < row.length; i++){
-            var _w = row[i].size / len;
-            newRect.push({w:len,h:_w});
-        }
-        newRect[0].x = rect.x;
-        newRect[0].y = rect.y;
-        for(var i = 1; i < newRect.length; i++){
-            newRect[i].x = newRect[i-1].x;
-            newRect[i].y = newRect[i-1].y + newRect[i-1].h;
-        }
-        subRect = {x:rect.x+len,y:rect.y,w:rect.w-len,h:rect.h};
-    }
-    for(var i = 0; i < newRect.length; i++){
-        row[i].div.style.left = newRect[i].x + "px";
-        row[i].div.style.top = newRect[i].y  + "px";
-        row[i].div.style.width = newRect[i].w + "px";
-        row[i].div.style.height = newRect[i].h + "px";
-        parent.appendChild(row[i].div);
-        if(row[i].children) {
-            squarify(newRect[i], row[i].children, [], width(newRect[i]), 0);
-        }
-    }
-    return subRect;
-}
-
-function width(rect){
-    var width = rect.w;
-    var height = rect.h;
-    return Math.min(width, height);
-}
-
-function calSum(data){
-    var sum = 0;
-    var color = getColor();
-    var children = data.children;
-    for(var i = 0; i < children.length; i++){
-        children[i].div = document.createElement("div");
-        children[i].div.style.backgroundColor = color;
-        //children[i].div.style.border = "1px solid white";
-        //children[i].div.style.position = "absolute";
-        children[i].div.className = "node";
-        if(children[i].children != null) {
-            var size = calSum(children[i]);
-        }
-        else{
-            var size = children[i].size;
-            children[i].div.innerText = children[i].name;
-        }
-        sum += size;
-    }
-    data.size = sum;
-    if(data.children){
-        data.children.sort(function(a,b){ return b.size - a.size; });
-    }
-    return sum;
-}
-
-function calSum2(data, factor){
-    var sum = 0;
-    var children = data.children;
-    if(children) {
-        for (var i = 0; i < children.length; i++) {
-            var size = calSum2(children[i], factor);
-            sum += size;
-        }
-        data.size = sum;
-        return sum;
-    }
-    else{
-        data.size *= factor;
+function calculateSize(data){
+    if(data.children == undefined){
         return data.size;
     }
+    data.size = 0;
+    for(var i = 0; i < data.children.length; i++){
+        data.size += calculateSize(data.children[i]);
+    }
+    return data.size;
 }
+
+var ratio;
+var color = getColor();
+function reSize(data){
+    data.size = data.size * ratio;
+
+    if(data.children == undefined){
+        return;
+    }
+
+    for(var i = 0; i < data.children.length; i++){
+        reSize(data.children[i]);
+    }
+}
+
+function squrify(data, rect){
+    if(data.children == undefined){
+        var tempRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        tempRect.setAttribute("x", rect.x + 0.5);
+        tempRect.setAttribute("y", rect.y + 0.5);
+        tempRect.setAttribute("width", rect.width - 1);
+        tempRect.setAttribute("height", rect.height - 1);
+
+        //color = getColor();
+        tempRect.setAttribute("fill",color);
+        svg.appendChild(tempRect);
+
+        var tempText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        tempText.setAttribute("x", rect.x);
+        tempText.setAttribute("y", rect.y + 15);
+        tempText.setAttribute("font-size", 10);
+        tempText.innerHTML = data.name;
+        svg.appendChild(tempText);
+    }
+    else{
+        if(data.children[0].children == undefined)
+            color = getColor();
+        data.children.sort( function(a, b){ return a.size < b.size ? 1 : -1 } );
+        var i = 0;
+        while(i < data.children.length){
+            var sum = data.children[i].size;
+            var swap = 0;
+            if(rect.height <= rect.width)
+                short = rect.height;
+            else{
+                swap = 1;
+                short = rect.width;
+            }
+            var tempI = i;
+            var a = 0;
+            var oldratio = 1;
+            var newratio = 0;
+            while(oldratio > newratio && i < data.children.length){
+                if(i == data.children.length-1){
+                    a=1;
+                    break;
+                }
+                i++;
+                sum += data.children[i].size
+                newratio = (sum/short) / (data.children[i].size/(sum/short));
+                oldratio = (data.children[i-1].size/((sum-data.children[i].size)/short))/
+                    ((sum-data.children[i].size)/short);
+            }
+
+            if(i < data.children.length-1 || a == 0){
+                sum = sum - data.children[i].size;
+            }
+            else
+            {
+                i++;
+            }
+
+            if(swap == 0){
+                var width = sum / short;
+                var height = 0;
+                var tempRect = {};
+                tempRect.x = rect.x;
+                tempRect.y = rect.y;
+                tempRect.width = rect.width;
+                tempRect.height = rect.height;
+                for(var j = tempI; j < i; j++){
+                    tempRect.x = rect.x;
+                    tempRect.y = rect.y + height;
+                    tempRect.width = width;
+                    tempRect.height = data.children[j].size / width;
+                    var tempColor = color;
+                    squrify(data.children[j], tempRect);
+                    color = tempColor;
+                    height += data.children[j].size / width;
+                }
+                rect.x = rect.x + width;
+                rect.y = rect.y;
+                rect.width = rect.width - width;
+                rect.height = rect.height;
+
+            }
+            else{
+                var height = sum / short;
+                var width = 0;
+                var tempRect = {};
+                tempRect.x = rect.x;
+                tempRect.y = rect.y;
+                tempRect.width = rect.width;
+                tempRect.height = rect.height;
+                for(var j = tempI; j < i; j++){
+                    tempRect.x = rect.x + width;
+                    tempRect.y = rect.y;
+                    tempRect.width = data.children[j].size / height;
+                    tempRect.height = height;
+                    var tempColor = color;
+                    squrify(data.children[j], tempRect);
+                    color = tempColor;
+                    width += data.children[j].size / height;
+                }
+                rect.x = rect.x;
+                rect.y = rect.y + height;
+                rect.width = rect.width;
+                rect.height = rect.height - height;
+            }
+        }
+
+    }
+
+}
+
 
 function getColor(){
     var r = Math.floor(Math.random()*100)+100;
-    var g = Math.floor(Math.random()*100)+100;
+    var g = Math.floor(Math.random()*150)+100;
     var b = Math.floor(Math.random()*100)+100;
     return "rgb("+r+","+g+","+b+")";
 }
@@ -150,27 +144,23 @@ function getColor(){
 window.onload = function(){
     var w = 1200;
     var h = 800;
-    var div0 = document.createElement("div");
-    div0.style.position = "relative";
-    div0.className = "box";
-    document.getElementsByTagName("body")[0].appendChild(div0);
+    var svg = document.getElementById("svg");
+    svg.setAttribute("width", w);
+    svg.setAttribute("height", h);
+
+    var rect = {};
+    rect.x = 0;
+    rect.y = 0;
+    rect.height = h;
+    rect.width = w;
+    //var color = getColor();
+
     d3.json("TreeData.json", function(json) {
         if(json != null) {
-            calSum(json);
-            console.log(json);
-            calSum2(json, w*h/json.size);
-            console.log(json);
-            var div = document.createElement("div");
-            div.className = "node";
-            div.style.backgroundColor = getColor();
-            div.style.width = w + "px";
-            div.style.height = h + "px";
-            div.style.left = "0px";
-            div.style.top = "0px";
-            json.div = div;
-            div0.appendChild(json.div);
-            var rect = {x:0,y:0,w:w,h:h};
-            squarify(rect, json.children, [], width(rect), 0);
+            var totalSize = calculateSize(json);
+            ratio = rect.width * rect.height / totalSize;
+            reSize(json);
+            squrify(json, rect);
         }
     });
 }
