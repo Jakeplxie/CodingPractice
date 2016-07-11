@@ -1,0 +1,54 @@
+{
+  "name": "flare",
+  "children": [
+    {
+      "name": "analytics",
+      "children": [
+        {
+          "name": "cluster",
+          "size": 1200
+        },
+        {
+          "name": "graph",
+          "size": 1230
+        },
+        {
+          "name": "optimization"
+        }
+      ]
+    },
+    {
+      "name": "animate",
+      "children": [
+        {
+          "name": "Easing",
+          "size": 1200
+        },
+        {
+          "name": "Function",
+          "size": "Parallel"
+        },
+        {
+          "name": "Pause",
+          "size": 1220
+        }
+      ]
+    },
+    {
+      "name": "data",
+      "children":[
+        {
+          "name": "datafield",
+          "size": 1100
+        },
+        {
+          "name": "dataset",
+          "size": 1000
+        },
+        {
+          "name": "dataUtil",
+          "size": 1500
+        }
+      ]
+  }]
+}

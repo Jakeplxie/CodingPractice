@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GetData</title>
+</head>
+<body>
+<script>
+
+    var arr = [];
+
+    var n = 20, m = 200;
+
+    for(var i = 0; i < n; i++){
+        arr.push(i);
+    }
+    var data = arr.map(function(){ return bumpLayer(m); });
+
+    console.log(data);
+    document.write("[");
+    for(var i = 0; i < data.length; i++){
+        document.write("[");
+        for(var j = 0; j < data[i].length; j++){
+            document.write("{x:" + data[i][j].x + ", y:" + data[i][j].y + "}");
+            if(j != data[i].length-1){
+                document.write(",");
+            }
+            else{
+                document.write("]" + "<br/>");
+            }
+        }
+        if(i != data.length){
+            document.write(",")
+        }else{
+            document.write("]");
+        }
+        document.write("<br/>");
+    }
+    document.write("]");
+
+    function bumpLayer(n) {
+
+        function bump(a) {
+            var x = 1 / (.1 + Math.random()),
+                    y = 2 * Math.random() - .5,
+                    z = 10 / (.1 + Math.random());
+            for (var i = 0; i < n; i++) {
+                var w = (i / n - y) * z;
+                a[i] += x * Math.exp(-w * w);
+            }
+        }
+
+        var a = [], i;
+        for (i = 0; i < n; ++i) a[i] = 0;
+        for (i = 0; i < 5; ++i) bump(a);
+        return a.map(function(d, i) { return {x: i, y: Math.max(0, d)}; });
+    }
+</script>
+</body>
+</html>
